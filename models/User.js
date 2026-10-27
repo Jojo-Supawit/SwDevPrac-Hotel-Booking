@@ -13,6 +13,11 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         match: [ /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Please add a valid email']
     },
+    tel: {
+        type: String,
+        required: [true, 'Please add a telephone number'],
+        trim: true
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const HospitalSchema = new mongoose.Schema({
+const HotelSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Please add a name'],
@@ -26,7 +26,9 @@ const HospitalSchema = new mongoose.Schema({
         maxLength: [5, 'Postal Code can not be more than 5 digits']
     },
     tel: {
-        type: String
+        type: String,
+        required: [true, 'Please add a telephone number'],
+        trim: true
     },
     region: {
         type: String,
@@ -38,11 +40,11 @@ const HospitalSchema = new mongoose.Schema({
 });
 
 //Reverse populate with virtuals
-HospitalSchema.virtual('appointments', {
-    ref: 'Appointment',
+HotelSchema.virtual('bookings', {
+    ref: 'Booking',
     localField: '_id',
-    foreignField: 'hospital',
+    foreignField: 'hotel',
     justOne: false
 });
 
-module.exports = mongoose.model('Hospital', HospitalSchema);
+module.exports = mongoose.model('Hotel', HotelSchema);
