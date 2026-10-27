@@ -1,10 +1,10 @@
-const Hospital = require('../models/Hospital');
-const Appointment = require('../models/Appointment');
+const Hotel = require('../models/Hotel');
+const Booking = require('../models/Booking');
 
-//@desc     Get all hospitals
-//route     GET /api/v1/hospitals
+//@desc     Get all hotels
+//route     GET /api/v1/hotels
 //access    Public
-exports.getHospitals = async (req,res,next)=>{
+exports.getHotels = async (req,res,next)=>{
     let query
 
     const reqQuery = {...req.query};
@@ -17,7 +17,7 @@ exports.getHospitals = async (req,res,next)=>{
     let queryStr = JSON.stringify(reqQuery);
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match=>`$${match}`);
 
-    query = Hospital.find(JSON.parse(queryStr)).populate('appointments');
+    query = Hotel.find(JSON.parse(queryStr)).populate('bookings');
 
     //Select fields
     if(req.query.select) {
@@ -36,11 +36,11 @@ exports.getHospitals = async (req,res,next)=>{
     const limit = parseInt(req.query.limit, 10)||25;
     const startIndex = (page-1)*limit;
     const endIndex = page*limit;
-    const total = await Hospital.countDocuments(JSON.parse(queryStr));
+    const total = await Hotel.countDocuments(JSON.parse(queryStr));
 
     query = query.skip(startIndex).limit(limit);
     try{
-        const hospitals = await query;
+        const hotels = await query;
 
         //Pagination result;
         const pagination = {};
@@ -59,71 +59,71 @@ exports.getHospitals = async (req,res,next)=>{
             }
         }
 
-        res.status(200).json({success:true, count:hospitals.length, pagination, data:hospitals});
+        res.status(200).json({success:true, count:hotels.length, pagination, data:hotels});
     } catch(err) {
         res.status(400).json({success:false});
     }
     
 }
 
-//@desc     Get a hospital
-//@route    GET /api/v1/hospitals/:id
+//@desc     Get a hotel
+//@route    GET /api/v1/hotels/:id
 //@access   Public
-exports.getHospital = async (req,res,next)=>{
+exports.getHotel = async (req,res,next)=>{
     try{
-        const hospital = await Hospital.findById(req.params.id);
+        const hotel = await Hotel.findById(req.params.id);
 
-        if(!hospital) {
+        if(!hotel) {
             return res.status(400).json({success:false});
         }
 
-        res.status(200).json({success:true, data:hospital});
+        res.status(200).json({success:true, data:hotel});
     } catch(err) {
         res.status(400).json({success:false});
     }
 }
 
-//@desc     Create a hospital
-//@route    POST /api/v1/hospitals
+//@desc     Create a hotel
+//@route    POST /api/v1/hotels
 //@access   Private
-exports.createHospital = async (req,res,next)=>{
-    const hospital = await Hospital.create(req.body);
-    res.status(201).json({success:true, data:hospital});
+exports.createHotel = async (req,res,next)=>{
+    const hotel = await Hotel.create(req.body);
+    res.status(201).json({success:true, data:hotel});
 }
 
-//@desc     Update a hospital
-//@route    PUT /api/v1/hospitals/:id
+//@desc     Update a hotel
+//@route    PUT /api/v1/hotels/:id
 //@access   Private
-exports.updateHospital = async (req,res,next)=>{
+exports.updateHotel = async (req,res,next)=>{
     try{
-        const hospital = await Hospital.findByIdAndUpdate(req.params.id, req.body, {
+        const hotel = await Hotel.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
         });
 
-        if(!hospital) {
+        if(!hotel) {
             return res.status(400).json({success:false});
         }
 
-        res.status(200).json({success:true, data:hospital});
+        res.status(200).json({success:true, data:hotel});
     } catch(err) {
         res.status(400).json({success:false});
     }
 }
 
-//@desc     Delete a hospital
-//route     DELETE /api/v1/hospitals/:id
+//@desc     Delete a hotel
+//route     DELETE /api/v1/hotels/:id
 //access    Private
-exports.deleteHospital = async (req,res,next)=>{
+exports.deleteHotel = async (req,res,next)=>{
     try{
-        const hospital = await Hospital.findById(req.params.id);
+        const hotel = await Hotel.findById(req.params.id);
 
-        if(!hospital) {
-            return res.status(404).json({success:false, message:`Hospital not found with id of ${req.params.id}`});
+        if(!hotel) {
+            return res.status(404).json({success:false, message:`Hotel not found with id of ${req.params.id}`});
         }
 
-        await Appointment.deleteMany({hospital: req.params.id});
-        await Hospital.deleteOne({ _id: req.params.id});
+        await Booking.deleteMany({hotel: req.params.id});
+        await Hotel.deleteOne({ _id: req.params.id});
 
         res.status(200).json({success:true, data: {}});
     } catch(err) {
