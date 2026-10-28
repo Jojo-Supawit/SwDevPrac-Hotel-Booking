@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{URL}}/api/v1/bookings"
+method: GET
+headers:
+  Authorization: Bearer {{ADMIN_TOKEN}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Admin sees bookings with populated user details', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data).to.be.an('array');
+          if (res.data.length > 0) {
+              pm.expect(res.data[0].user).to.be.an('object');
+              pm.expect(res.data[0].user.name).to.be.a('string');
+          }
+      });
+    language: text/javascript
+order: 7000

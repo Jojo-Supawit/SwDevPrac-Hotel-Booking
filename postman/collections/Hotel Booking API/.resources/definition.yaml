@@ -1,0 +1,11 @@
+$kind: collection
+description: "Comprehensive Postman test suite for Project#1: Hotel Booking"
+variables:
+  URL: http://localhost:5000
+  USER_TOKEN: ""
+  ADMIN_TOKEN: ""
+  USER_EMAIL: ""
+  ADMIN_EMAIL: ""
+  HOTEL_NAME: ""
+  HOTEL_ID: ""
+  BOOKING_ID: ""

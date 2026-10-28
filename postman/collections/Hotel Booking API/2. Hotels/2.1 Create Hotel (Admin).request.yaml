@@ -1,0 +1,38 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hotels"
+method: POST
+headers:
+  Authorization: Bearer {{ADMIN_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "{{HOTEL_NAME}}",
+        "address": "494 Ratchadamri Road",
+        "district": "Pathum Wan",
+        "province": "Bangkok",
+        "postalcode": "10330",
+        "tel": "02-2541234",
+        "region": "Bangkok"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const ts = Date.now();
+      const hotelName = 'Grand Hyatt Erawan Bangkok ' + ts;
+      pm.collectionVariables.set('HOTEL_NAME', hotelName);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Hotel created with valid ID', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data._id).to.be.a('string');
+          pm.collectionVariables.set('HOTEL_ID', res.data._id);
+      });
+    language: text/javascript
+order: 1000

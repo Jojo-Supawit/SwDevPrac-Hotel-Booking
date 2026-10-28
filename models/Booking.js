@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const BookingSchema = new mongoose.Schema({
     checkInDate: {
         type: Date,
-        required: true
+        required: [true, 'Please add a check-in date']
     },
     nights: {
         type: Number,

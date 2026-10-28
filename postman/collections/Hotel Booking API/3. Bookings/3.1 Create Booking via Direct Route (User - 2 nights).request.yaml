@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{URL}}/api/v1/bookings"
+method: POST
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "hotel": "{{HOTEL_ID}}",
+        "checkInDate": "2026-11-20",
+        "nights": 2
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Booking created with 2 nights', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data.nights).to.eql(2);
+          pm.collectionVariables.set('BOOKING_ID', res.data._id);
+      });
+    language: text/javascript
+order: 1000

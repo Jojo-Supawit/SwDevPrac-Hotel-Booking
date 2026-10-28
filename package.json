@@ -1,7 +1,7 @@
 {
-  "name": "a4-jojo-supawit",
+  "name": "hotel-booking",
   "version": "1.0.0",
-  "description": "",
+  "description": "Hotel Booking REST API for Software Development Practice",
   "homepage": "https://github.com/2110503-69CP/a4-Jojo-Supawit#readme",
   "bugs": {
     "url": "https://github.com/2110503-69CP/a4-Jojo-Supawit/issues"
@@ -16,7 +16,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "seed": "node seeder.js -i",
+    "seed:destroy": "node seeder.js -d"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

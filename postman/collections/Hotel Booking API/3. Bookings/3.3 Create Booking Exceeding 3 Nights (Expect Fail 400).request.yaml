@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{URL}}/api/v1/bookings"
+method: POST
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "hotel": "{{HOTEL_ID}}",
+        "checkInDate": "2026-12-15",
+        "nights": 4
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 400 Bad Request', function () {
+          pm.response.to.have.status(400);
+      });
+      pm.test('Returns error message enforcing 3 nights limit', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.false;
+          pm.expect(res.message).to.include('between 1 and 3');
+      });
+    language: text/javascript
+order: 3000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{URL}}/api/v1/auth/logout"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Logout response success true', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+      });
+    language: text/javascript
+order: 6000
