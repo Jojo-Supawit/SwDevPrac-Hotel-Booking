@@ -1,11 +1,30 @@
 $kind: collection
 description: "Comprehensive Postman test suite for Project#1: Hotel Booking"
 variables:
-  URL: http://localhost:5000
-  USER_TOKEN: ""
-  ADMIN_TOKEN: ""
-  USER_EMAIL: ""
-  ADMIN_EMAIL: ""
-  HOTEL_NAME: ""
-  HOTEL_ID: ""
-  BOOKING_ID: ""
+  - key: URL
+    value: http://localhost:5000
+    disabled: false
+  - key: USER_TOKEN
+    value: ""
+    disabled: false
+  - key: ADMIN_TOKEN
+    value: ""
+    disabled: false
+  - key: USER_EMAIL
+    value: ""
+    disabled: false
+  - key: ADMIN_EMAIL
+    value: ""
+    disabled: false
+  - key: HOTEL_NAME
+    value: ""
+    disabled: false
+  - key: HOTEL_ID
+    value: ""
+    disabled: false
+  - key: BOOKING_ID
+    value: ""
+    disabled: false
+  - key: COMPLETED_BOOKING_ID
+    value: ""
+    disabled: false

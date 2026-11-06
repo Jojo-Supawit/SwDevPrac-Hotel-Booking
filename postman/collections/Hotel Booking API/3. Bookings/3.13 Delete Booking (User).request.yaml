@@ -14,4 +14,4 @@ scripts:
           pm.expect(res.success).to.be.true;
       });
     language: text/javascript
-order: 9000
+order: 13000
