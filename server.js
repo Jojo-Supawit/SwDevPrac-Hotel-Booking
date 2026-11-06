@@ -21,6 +21,7 @@ connectDB();
 const hotels = require('./routes/hotels');
 const bookings = require('./routes/bookings');
 const auth = require('./routes/auth');
+const { initCronJobs } = require('./jobs/bookingJobs');
 
 const app=express();
 app.set('query parser', 'extended');
@@ -98,6 +99,9 @@ app.use('/api/v1/auth', auth);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, console.log('Server running in ', process.env.NODE_ENV, ' mode on port ', PORT));
+
+// Start background cron jobs
+initCronJobs();
 
 //Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

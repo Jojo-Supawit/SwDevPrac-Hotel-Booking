@@ -33,13 +33,34 @@ const HotelSchema = new mongoose.Schema({
     region: {
         type: String,
         required: [true, 'Please add a region']
+    },
+    location: {
+        type: {
+            type: String,
+            enum: ['Point']
+        },
+        coordinates: {
+            type: [Number] // [longitude, latitude]
+        },
+        formattedAddress: String
+    },
+    pricePerNight: {
+        type: Number,
+        default: 1500
+    },
+    taxId: {
+        type: String,
+        default: '0105559876543'
     }
 }, {
     toJSON: {virtuals: true},
     toObject: {virtuals: true}
 });
 
-//Reverse populate with virtuals
+// Create 2dsphere index for geospatial queries
+HotelSchema.index({ location: '2dsphere' });
+
+// Reverse populate with virtuals
 HotelSchema.virtual('bookings', {
     ref: 'Booking',
     localField: '_id',

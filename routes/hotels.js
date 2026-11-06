@@ -1,5 +1,5 @@
 const express = require('express');
-const { getHotels, getHotel, createHotel, updateHotel, deleteHotel } = require('../controllers/hotels');
+const { getHotels, getHotel, createHotel, updateHotel, deleteHotel, getHotelsInRadius } = require('../controllers/hotels');
 
 const bookingRouter = require('./bookings');
 
@@ -46,6 +46,23 @@ const { protect, authorize } = require('../middleware/auth');
  *         region:
  *           type: string
  *           description: Region
+ *         location:
+ *           type: object
+ *           properties:
+ *             type:
+ *               type: string
+ *               enum: [Point]
+ *             coordinates:
+ *               type: array
+ *               items:
+ *                 type: number
+ *               description: "[longitude, latitude]"
+ *         pricePerNight:
+ *           type: number
+ *           description: Price per night in THB
+ *         taxId:
+ *           type: string
+ *           description: Business Tax ID
  *       example:
  *         name: The Grand Palace Hotel
  *         address: 123 Sukhumvit Road
@@ -54,6 +71,8 @@ const { protect, authorize } = require('../middleware/auth');
  *         postalcode: 10110
  *         tel: 02-1234567
  *         region: Bangkok
+ *         pricePerNight: 1500
+ *         taxId: '0105559876543'
  */
 
 /**
@@ -67,7 +86,7 @@ const { protect, authorize } = require('../middleware/auth');
  * @swagger
  * /hotels:
  *   get:
- *     summary: Returns the list of all the hotels
+ *     summary: Returns the list of all the hotels (can filter by ?lat=&lng=&distance=)
  *     tags: [Hotels]
  *     responses:
  *       200:
@@ -78,6 +97,38 @@ const { protect, authorize } = require('../middleware/auth');
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Hotel'
+ */
+
+/**
+ * @swagger
+ * /hotels/radius/{lat}/{lng}/{distance}:
+ *   get:
+ *     summary: Find hotels within a specified radius (in kilometers)
+ *     tags: [Hotels]
+ *     parameters:
+ *       - in: path
+ *         name: lat
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Latitude
+ *       - in: path
+ *         name: lng
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Longitude
+ *       - in: path
+ *         name: distance
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Distance radius in kilometers
+ *     responses:
+ *       200:
+ *         description: Hotels found within the radius
+ *       400:
+ *         description: Invalid coordinates or distance
  */
 
 /**
@@ -179,6 +230,9 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Re-route into other resource routers
 router.use('/:hotelId/bookings/', bookingRouter);
+
+// Geospatial search route
+router.route('/radius/:lat/:lng/:distance').get(getHotelsInRadius);
 
 router.route('/')
     .get(getHotels)

@@ -45,6 +45,11 @@
       "key": "BOOKING_ID",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "COMPLETED_BOOKING_ID",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -97,8 +102,15 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/auth/register",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             }
           },
           "response": []
@@ -149,8 +161,15 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/auth/register",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             }
           },
           "response": []
@@ -190,8 +209,15 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/auth/login",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": []
@@ -231,8 +257,15 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/auth/login",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             }
           },
           "response": []
@@ -267,8 +300,15 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/auth/me",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "me"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
             }
           },
           "response": []
@@ -297,8 +337,15 @@
             "header": [],
             "url": {
               "raw": "{{URL}}/api/v1/auth/logout",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             }
           },
           "response": []
@@ -358,8 +405,14 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/hotels",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels"
+              ]
             }
           },
           "response": []
@@ -392,8 +445,14 @@
             "header": [],
             "url": {
               "raw": "{{URL}}/api/v1/hotels",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels"
+              ]
             }
           },
           "response": []
@@ -423,8 +482,15 @@
             "header": [],
             "url": {
               "raw": "{{URL}}/api/v1/hotels/{{HOTEL_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels", "{{HOTEL_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels",
+                "{{HOTEL_ID}}"
+              ]
             }
           },
           "response": []
@@ -467,8 +533,59 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/hotels/{{HOTEL_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels", "{{HOTEL_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels",
+                "{{HOTEL_ID}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Search Hotels within Radius (5km)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Geospatial radius returns hotels and excludes distant Pattaya hotel\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.count).to.be.above(0);",
+                  "    pm.expect(Array.isArray(res.data)).to.be.true;",
+                  "    const hasPattaya = res.data.some(h => (h.province && h.province.includes(\"Chonburi\")) || (h.name && h.name.includes(\"Pattaya\")));",
+                  "    pm.expect(hasPattaya).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/api/v1/hotels/radius/13.7367/100.5604/5",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels",
+                "radius",
+                "13.7367",
+                "100.5604",
+                "5"
+              ]
             }
           },
           "response": []
@@ -517,8 +634,14 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/bookings",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
             }
           },
           "response": []
@@ -561,8 +684,16 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/hotels/{{HOTEL_ID}}/bookings",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels", "{{HOTEL_ID}}", "bookings"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels",
+                "{{HOTEL_ID}}",
+                "bookings"
+              ]
             }
           },
           "response": []
@@ -605,8 +736,14 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/bookings",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
             }
           },
           "response": []
@@ -641,8 +778,14 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/bookings",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
             }
           },
           "response": []
@@ -677,8 +820,15 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/bookings/{{BOOKING_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings", "{{BOOKING_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{BOOKING_ID}}"
+              ]
             }
           },
           "response": []
@@ -721,8 +871,15 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/bookings/{{BOOKING_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings", "{{BOOKING_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{BOOKING_ID}}"
+              ]
             }
           },
           "response": []
@@ -761,8 +918,14 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/bookings",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings"
+              ]
             }
           },
           "response": []
@@ -805,14 +968,176 @@
             },
             "url": {
               "raw": "{{URL}}/api/v1/bookings/{{BOOKING_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings", "{{BOOKING_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{BOOKING_ID}}"
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "3.9 Delete Booking (User)",
+          "name": "3.10 Trigger Background Cron Job (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Cron job executes and returns transition/reminder results\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.data).to.have.property(\"transitionedCount\");",
+                  "    pm.expect(res.data).to.have.property(\"remindersSentCount\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/api/v1/bookings/trigger-cron",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "trigger-cron"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.11 Download Tax Invoice - Completed Booking (User/Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Find an existing completed booking ID to test download invoice",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get(\"URL\") + \"/api/v1/bookings\",",
+                  "    method: \"GET\",",
+                  "    header: { Authorization: \"Bearer \" + pm.collectionVariables.get(\"ADMIN_TOKEN\") }",
+                  "}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        const json = res.json();",
+                  "        const completed = json.data.find(b => b.status === \"Completed\");",
+                  "        if (completed) {",
+                  "            pm.collectionVariables.set(\"COMPLETED_BOOKING_ID\", completed._id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is application/pdf\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+                  "});",
+                  "pm.test(\"Content-Disposition is attachment with invoice filename\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/api/v1/bookings/{{COMPLETED_BOOKING_ID}}/invoice",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{COMPLETED_BOOKING_ID}}",
+                "invoice"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.12 Download Tax Invoice - Uncompleted Booking (Expect Fail 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Rejection error message states only completed bookings allowed\", function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.success).to.be.false;",
+                  "    pm.expect(res.message).to.include(\"only available for completed bookings\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{USER_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{URL}}/api/v1/bookings/{{BOOKING_ID}}/invoice",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "invoice"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.13 Delete Booking (User)",
           "event": [
             {
               "listen": "test",
@@ -840,14 +1165,21 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/bookings/{{BOOKING_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "bookings", "{{BOOKING_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "bookings",
+                "{{BOOKING_ID}}"
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "3.10 Delete Hotel (Admin - Cleanup)",
+          "name": "3.14 Delete Hotel (Admin - Cleanup)",
           "event": [
             {
               "listen": "test",
@@ -875,8 +1207,15 @@
             ],
             "url": {
               "raw": "{{URL}}/api/v1/hotels/{{HOTEL_ID}}",
-              "host": ["{{URL}}"],
-              "path": ["api", "v1", "hotels", "{{HOTEL_ID}}"]
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotels",
+                "{{HOTEL_ID}}"
+              ]
             }
           },
           "response": []

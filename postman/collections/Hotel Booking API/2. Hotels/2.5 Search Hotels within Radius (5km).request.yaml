@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hotels/radius/13.7367/100.5604/5"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Geospatial radius returns hotels and excludes distant Pattaya hotel", function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.count).to.be.above(0);
+          pm.expect(Array.isArray(res.data)).to.be.true;
+          const hasPattaya = res.data.some(h => (h.province && h.province.includes("Chonburi")) || (h.name && h.name.includes("Pattaya")));
+          pm.expect(hasPattaya).to.be.false;
+      });
+    language: text/javascript
+order: 5000

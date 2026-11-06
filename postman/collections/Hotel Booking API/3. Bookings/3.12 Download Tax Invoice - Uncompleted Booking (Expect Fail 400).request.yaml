@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{URL}}/api/v1/bookings/{{BOOKING_ID}}/invoice"
+method: GET
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 400 Bad Request", function () {
+          pm.response.to.have.status(400);
+      });
+      pm.test("Rejection error message states only completed bookings allowed", function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.false;
+          pm.expect(res.message).to.include("only available for completed bookings");
+      });
+    language: text/javascript
+order: 12000

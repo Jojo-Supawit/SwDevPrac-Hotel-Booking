@@ -1,5 +1,13 @@
 const express = require('express');
-const { getBookings, getBooking, addBooking, updateBooking, deleteBookings } = require('../controllers/bookings');
+const {
+    getBookings,
+    getBooking,
+    addBooking,
+    updateBooking,
+    deleteBookings,
+    downloadInvoice,
+    triggerCronJob
+} = require('../controllers/bookings');
 
 const router = express.Router({ mergeParams: true });
 
@@ -23,11 +31,22 @@ const { protect, authorize } = require('../middleware/auth');
  *           type: string
  *           format: date
  *           description: Booking check-in date
+ *         checkOutDate:
+ *           type: string
+ *           format: date
+ *           description: Auto-calculated check-out date
  *         nights:
  *           type: integer
  *           minimum: 1
  *           maximum: 3
  *           description: Number of nights (1 to 3)
+ *         status:
+ *           type: string
+ *           enum: [Confirmed, Completed, Cancelled, No-Show]
+ *           default: Confirmed
+ *         transactionRef:
+ *           type: string
+ *           description: Unique transaction reference code
  *         user:
  *           type: string
  *           description: The user ID who booked
@@ -78,6 +97,54 @@ const { protect, authorize } = require('../middleware/auth');
  *         description: Invalid input or nights exceed 3
  *       401:
  *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /bookings/trigger-cron:
+ *   post:
+ *     summary: Manually trigger background cron job tasks (Admin only)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cron job tasks executed successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin only)
+ */
+
+/**
+ * @swagger
+ * /bookings/{id}/invoice:
+ *   get:
+ *     summary: Download formatted PDF tax invoice / receipt for completed bookings
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The booking id
+ *     responses:
+ *       200:
+ *         description: Formatted PDF invoice streamed as binary
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Booking is not completed yet
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Booking not found
  */
 
 /**
@@ -150,6 +217,14 @@ const { protect, authorize } = require('../middleware/auth');
 router.route('/')
     .get(protect, getBookings)
     .post(protect, authorize('admin', 'user'), addBooking);
+
+// Manual trigger for cron job (placed before /:id)
+router.route('/trigger-cron')
+    .post(protect, authorize('admin'), triggerCronJob);
+
+// PDF Tax Invoice download for completed booking
+router.route('/:id/invoice')
+    .get(protect, authorize('admin', 'user'), downloadInvoice);
 
 router.route('/:id')
     .get(protect, getBooking)
