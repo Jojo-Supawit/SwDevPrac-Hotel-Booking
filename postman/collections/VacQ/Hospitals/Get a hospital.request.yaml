@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals/6abbf73aaefe6bdb4eae8771"
+method: GET
+order: 2000

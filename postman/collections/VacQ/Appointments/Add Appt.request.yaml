@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals/6ac3c94e48e5a560952df706/appointments"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+    description: JSON Type
+body:
+  type: json
+  content: "{\r
+
+    \    \"apptDate\": \"2021-10-02T17:00:00.000Z\",\r
+
+    \    \"user\": \"6aa6d175543fb27a7dbe04e2\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+order: 4000

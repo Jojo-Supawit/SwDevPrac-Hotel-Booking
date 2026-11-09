@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+    description: JSON Type
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Hacker Hospital <script>alert(1)</script>\",\r
+
+    \    \"address\": \"Changwattana Pakkret\",\r
+
+    \    \"district\": \"Pakkret\",\r
+
+    \    \"province\": \"Nonthaburi\",\r
+
+    \    \"postalcode\": \"10110\",\r
+
+    \    \"tel\": \"02-8369999\",\r
+
+    \    \"region\": \"กรุงเทพมหานคร (Bangkok)\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+order: 3000

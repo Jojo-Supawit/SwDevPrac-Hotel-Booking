@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{URL}}/api/v1/appointments/6ac3caab48e5a560952df707"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+order: 6000
