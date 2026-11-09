@@ -1,0 +1,324 @@
+@startuml HotelBookingApiPaths
+!pragma layout smetana
+title Hotel Booking API
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment left
+skinparam component {
+  BackgroundColor #EFF6FF
+  BorderColor #3A5B81
+  FontColor #172B45
+}
+
+component "Express API\n/api/v1" as API
+
+component Auth [
+  **Auth**
+  ----
+  POST /api/v1/auth/register — Register [Public]
+  POST /api/v1/auth/login — Get JWT [Public]
+  GET /api/v1/auth/me — Get current user [Bearer]
+  GET /api/v1/auth/logout — Clear auth cookie [Public]
+]
+
+component Hotels [
+  **Hotels**
+  ----
+  GET /api/v1/hotels — List and filter hotels [Public]
+  GET /api/v1/hotels/radius/:lat/:lng/:distance — Search by radius in km [Public]
+  GET /api/v1/hotels/:id — Get hotel details [Public]
+  POST /api/v1/hotels — Create hotel [Admin]
+  PUT /api/v1/hotels/:id — Update hotel [Admin]
+  DELETE /api/v1/hotels/:id — Delete hotel and its bookings [Admin]
+]
+
+component Bookings [
+  **Bookings**
+  ----
+  GET /api/v1/bookings — List own bookings, or all for admin [Bearer]
+  POST /api/v1/bookings — Create booking with hotel ID in body [User/Admin]
+  GET /api/v1/bookings/:id — Get booking details [Owner/Admin]
+  PUT /api/v1/bookings/:id — Update booking [Owner/Admin]
+  DELETE /api/v1/bookings/:id — Delete booking [Owner/Admin]
+  GET /api/v1/bookings/:id/invoice — Download PDF for completed booking [Owner/Admin]
+  POST /api/v1/bookings/trigger-cron — Run booking jobs [Admin]
+]
+
+component HotelBookings [
+  **Bookings under a hotel**
+  ----
+  GET /api/v1/hotels/:hotelId/bookings — List bookings filtered by hotel [Bearer]
+  POST /api/v1/hotels/:hotelId/bookings — Create booking with hotel ID from URL [User/Admin]
+  GET /api/v1/hotels/:hotelId/bookings/:id — Get booking details [Owner/Admin]
+  PUT /api/v1/hotels/:hotelId/bookings/:id — Update booking [Owner/Admin]
+  DELETE /api/v1/hotels/:hotelId/bookings/:id — Delete booking [Owner/Admin]
+  GET /api/v1/hotels/:hotelId/bookings/:id/invoice — Download PDF for completed booking [Owner/Admin]
+  POST /api/v1/hotels/:hotelId/bookings/trigger-cron — Run booking jobs [Admin]
+  ----
+  List and create use :hotelId. Item actions look up bookings by :id.
+  The cron action runs globally.
+]
+
+API --> Auth
+API --> Hotels
+API --> Bookings
+Hotels --> HotelBookings : mounts the bookings router
+
+legend bottom
+  **Access**
+  Public: No Bearer JWT required by the route.
+  Bearer: Signed-in user. Booking lists show own records for users and all records for admins, within any hotel filter.
+  User/Admin: Bearer JWT with user or admin role. Bookings require 1 to 3 nights.
+  Owner/Admin: Bearer JWT and booking ownership or admin role.
+  Admin: Bearer JWT with admin role.
+  **Swagger UI**  /api-docs
+endlegend
+@enduml
+
+@startuml HotelBookingAuthApi
+!pragma layout smetana
+title Hotel Booking API | Authentication
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment left
+
+component Register [
+  **POST /api/v1/auth/register**
+  ----
+  Handler: auth.register | Public
+  JSON body: name, email, tel, password (at least 6 characters).
+  Phone aliases: telephoneNumber, telephone, phone.
+  Optional role: user or admin. The controller forwards it; default is user.
+  200: success, _id, name, email, tel, role, token; sets HttpOnly token cookie.
+  400: Validation error or duplicate email.
+]
+
+component Login [
+  **POST /api/v1/auth/login**
+  ----
+  Handler: auth.login | Public
+  JSON body: email, password.
+  200: success, _id, name, email, tel, role, token; sets HttpOnly token cookie.
+  400: Missing credentials or email not found.
+  401: Wrong password or login error.
+]
+
+component Profile [
+  **GET /api/v1/auth/me**
+  ----
+  Handler: auth.getMe | Bearer JWT
+  Reads the user ID from the JWT. No request body.
+  200: success, data (current user profile, with password excluded).
+  401: Missing or invalid JWT.
+]
+
+component Logout [
+  **GET /api/v1/auth/logout**
+  ----
+  Handler: auth.logout | Public
+  200: success, data (empty object); replaces token cookie with a short-lived value.
+  The caller must discard its Bearer JWT separately.
+]
+
+Register -[hidden]down-> Login
+Login -[hidden]down-> Profile
+Profile -[hidden]down-> Logout
+@enduml
+
+@startuml HotelBookingHotelsApi
+!pragma layout smetana
+title Hotel Booking API | Hotels
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment left
+
+component ListHotels [
+  **GET /api/v1/hotels**
+  ----
+  Handler: hotels.getHotels | Public
+  Query: hotel field filters, select, sort, page (default 1), limit (default 25).
+  Radius filter: lat, lng, distance (km), supplied together.
+  Example: /api/v1/hotels?province=Bangkok&sort=name&page=1&limit=10
+  200: success, count, pagination, data (hotel list).
+  400: Query error handled by the controller.
+]
+
+component RadiusHotels [
+  **GET /api/v1/hotels/radius/:lat/:lng/:distance**
+  ----
+  Handler: hotels.getHotelsInRadius | Public
+  Path: latitude, longitude, radius in kilometers (greater than 0).
+  Example: /api/v1/hotels/radius/13.7563/100.5018/5
+  200: success, count, data (hotels inside the radius).
+  400: Invalid coordinates or radius, or query error.
+]
+
+component ReadHotel [
+  **GET /api/v1/hotels/:id**
+  ----
+  Handler: hotels.getHotel | Public
+  Path: id (hotel ID).
+  200: success, data (hotel).
+  400: Invalid ID or lookup error. 404: Hotel not found.
+]
+
+component CreateHotel [
+  **POST /api/v1/hotels**
+  ----
+  Handler: hotels.createHotel | Admin
+  Required JSON: name, address, district, province, postalcode, tel, region.
+  Optional: pricePerNight, taxId, location or lat/lng (latitude/longitude aliases).
+  Converts coordinates to a GeoJSON Point in longitude, latitude order.
+  201: success, data (created hotel). 400: Invalid input or save error.
+]
+
+component UpdateHotel [
+  **PUT /api/v1/hotels/:id**
+  ----
+  Handler: hotels.updateHotel | Admin
+  Path: id (hotel ID). JSON body: hotel fields to change.
+  Accepts the same coordinate inputs as creation and runs model validation.
+  200: success, data (updated hotel).
+  400: Invalid input or update error. 404: Hotel not found.
+]
+
+component DeleteHotel [
+  **DELETE /api/v1/hotels/:id**
+  ----
+  Handler: hotels.deleteHotel | Admin
+  Path: id (hotel ID). Deletes the hotel's bookings, then the hotel.
+  200: success, data (empty object).
+  400: Invalid ID or delete error. 404: Hotel not found.
+]
+
+ListHotels -[hidden]down-> RadiusHotels
+RadiusHotels -[hidden]down-> ReadHotel
+ReadHotel -[hidden]down-> CreateHotel
+CreateHotel -[hidden]down-> UpdateHotel
+UpdateHotel -[hidden]down-> DeleteHotel
+
+legend bottom
+  Admin routes require Authorization: Bearer <JWT>.
+  Middleware returns 401 for a missing or invalid token and 403 for a disallowed role.
+endlegend
+@enduml
+
+@startuml HotelBookingReservationsApi
+!pragma layout smetana
+title Hotel Booking API | Booking management
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment left
+
+component ListBookings [
+  **GET /api/v1/bookings**
+  **GET /api/v1/hotels/:hotelId/bookings**
+  ----
+  Handler: bookings.getBookings | Bearer JWT
+  Optional hotelId in the nested path filters the list for both roles.
+  Users see their own bookings. Admins see all matching bookings.
+  200: success, count, data (bookings with hotel details).
+  Admin results also include the booking user's name, email and tel.
+  500: Lookup error.
+]
+
+component CreateBooking [
+  **POST /api/v1/bookings**
+  **POST /api/v1/hotels/:hotelId/bookings**
+  ----
+  Handler: bookings.addBooking | User or Admin
+  JSON body: checkInDate (or bookingDate / date), nights (integer 1–3).
+  Hotel ID: hotel in the direct request body, or :hotelId in the nested URL.
+  Owner comes from the JWT. The model calculates checkOutDate and generates
+  transactionRef if absent. Status defaults to Confirmed.
+  201: success, data (created booking).
+  400: Missing or invalid fields. 404: Hotel not found. 500: Save error.
+]
+
+component ReadBooking [
+  **GET /api/v1/bookings/:id**
+  **GET /api/v1/hotels/:hotelId/bookings/:id**
+  ----
+  Handler: bookings.getBooking | Owner or Admin
+  Path: id (booking ID). The controller looks up the booking by this ID.
+  200: success, data (booking with hotel details).
+  401: Access denied. 404: Missing booking or malformed ID. 500: Lookup error.
+]
+
+component UpdateBooking [
+  **PUT /api/v1/bookings/:id**
+  **PUT /api/v1/hotels/:hotelId/bookings/:id**
+  ----
+  Handler: bookings.updateBooking | Owner or Admin
+  Path: id (booking ID). JSON body: booking fields to change.
+  A supplied nights value must be an integer from 1 to 3.
+  A date or nights change recalculates checkOutDate. For non-admins the
+  controller removes the top-level user field before updating.
+  200: success, data (updated booking). 400: Invalid input or ID.
+  401: Access denied. 404: Booking not found. 500: Update error.
+]
+
+component DeleteBooking [
+  **DELETE /api/v1/bookings/:id**
+  **DELETE /api/v1/hotels/:hotelId/bookings/:id**
+  ----
+  Handler: bookings.deleteBookings | Owner or Admin
+  Path: id (booking ID). No request body.
+  200: success, data (empty object).
+  401: Access denied. 404: Missing booking or malformed ID. 500: Delete error.
+]
+
+ListBookings -[hidden]down-> CreateBooking
+CreateBooking -[hidden]down-> ReadBooking
+ReadBooking -[hidden]down-> UpdateBooking
+UpdateBooking -[hidden]down-> DeleteBooking
+
+legend bottom
+  All booking routes require Authorization: Bearer <JWT>.
+  Nested read/update/delete handlers use the booking ID to look up the record.
+endlegend
+@enduml
+
+@startuml HotelBookingActionsApi
+!pragma layout smetana
+title Hotel Booking API | Invoice and background jobs
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment left
+
+component Invoice [
+  **GET /api/v1/bookings/:id/invoice**
+  **GET /api/v1/hotels/:hotelId/bookings/:id/invoice**
+  ----
+  Handler: bookings.downloadInvoice | Owner or Admin
+  Path: id (booking ID). The booking must have status Completed.
+  200: application/pdf attachment, Invoice-{transactionRef}.pdf.
+  The booking ID is used in the filename if transactionRef is absent.
+  400: Booking is not completed. 401: Access denied.
+  404: Missing booking or malformed ID. 500: PDF generation error.
+]
+
+component Cron [
+  **POST /api/v1/bookings/trigger-cron**
+  **POST /api/v1/hotels/:hotelId/bookings/trigger-cron**
+  ----
+  Handler: bookings.triggerCronJob | Admin
+  No request body. Both paths run jobs across all hotels.
+  Marks Confirmed bookings as Completed when check-out has passed.
+  Sends outstanding reminders for Confirmed bookings checking in within 24 hours.
+  200: success, message, data (job result, including counts on success).
+  Inspect data.success for the job outcome. 500: Unhandled job error.
+]
+
+Invoice -[hidden]down-> Cron
+
+legend bottom
+  Authorization: Bearer <JWT> is required.
+  Middleware returns 401 for a missing or invalid token and 403 for a disallowed role.
+endlegend
+@enduml
