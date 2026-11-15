@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{URL}}/api/v1/bookings/{{USER_BOOKING_2_ID}}"
+method: PUT
+headers:
+  Authorization: Bearer {{ADMIN_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "nights": 2
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Admin edits user booking nights to 2', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data.nights).to.equal(2);
+      });
+    language: text/javascript
+order: 14000

@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{URL}}/api/v1/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "admin@gmail.com",
+        "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Admin logged in successfully and admin token saved', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.role).to.equal('admin');
+          pm.expect(res.token).to.be.a('string');
+          pm.collectionVariables.set('ADMIN_TOKEN', res.token);
+      });
+    language: text/javascript
+order: 12000

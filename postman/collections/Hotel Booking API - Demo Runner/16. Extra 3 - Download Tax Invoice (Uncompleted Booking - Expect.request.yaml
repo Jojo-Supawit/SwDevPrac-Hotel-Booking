@@ -1,0 +1,19 @@
+$kind: http-request
+name: 16. Extra 3 - Download Tax Invoice (Uncompleted Booking - Expect Fail 400)
+url: "{{URL}}/api/v1/bookings/{{CONFIRMED_BOOKING_ID}}/invoice"
+method: GET
+headers:
+  Authorization: Bearer {{ADMIN_TOKEN}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 400 Bad Request', function () {
+          pm.response.to.have.status(400);
+      });
+      pm.test('Invoice rejected: only available for completed bookings', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.false;
+          pm.expect(res.message).to.include('only available for completed bookings');
+      });
+    language: text/javascript
+order: 19000
