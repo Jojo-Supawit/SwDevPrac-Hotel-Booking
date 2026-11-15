@@ -3,5 +3,10 @@ description: ""
 variables:
   - key: json_web_token_0pxb
     secret: true
+    disabled: false
   - key: bearer_token_0hsq
     secret: true
+    disabled: false
+  - key: URL
+    value: http://mywebapp-env.eba-zmna87pf.us-east-1.elasticbeanstalk.com
+    disabled: false

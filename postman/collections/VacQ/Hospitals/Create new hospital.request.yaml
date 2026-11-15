@@ -9,7 +9,7 @@ body:
   type: json
   content: "{\r
 
-    \    \"name\": \"Hacker Hospital <script>alert(1)</script>\",\r
+    \    \"name\": \"{{$randomFullName}}\",\r
 
     \    \"address\": \"Changwattana Pakkret\",\r
 
@@ -28,4 +28,26 @@ auth:
   type: bearer
   credentials:
     token: "{{TOKEN}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      const response = pm.response.json();\r
+
+      const new_hospital_id = response.data.id;\r
+
+      \r
+
+      pm.globals.set(\"global_hospital_ID\", new_hospital_id);\r
+
+      \r
+
+      pm.execution.setNextRequest(\"Get a hospital\");"
+    language: text/javascript
 order: 3000

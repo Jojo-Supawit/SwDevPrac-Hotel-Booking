@@ -1,0 +1,6 @@
+name: VacQ
+values:
+  - key: TOKEN
+    secret: true
+  - key: '{{URL}}'
+    value: ''

@@ -1,2 +1,5 @@
 name: Globals
-values: []
+values:
+  - key: global_hospital_ID
+    value: ''
+    enabled: true

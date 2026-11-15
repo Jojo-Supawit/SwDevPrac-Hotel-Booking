@@ -18,7 +18,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "seed": "node seeder.js -i",
-    "seed:destroy": "node seeder.js -d"
+    "seed:destroy": "node seeder.js -d",
+    "demo": "newman run HotelBooking.postman_collection.json"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -7,9 +7,6 @@ variables:
   - key: USER_TOKEN
     value: ""
     disabled: false
-  - key: ADMIN_TOKEN
-    value: ""
-    disabled: false
   - key: USER_EMAIL
     value: ""
     disabled: false
@@ -25,6 +22,6 @@ variables:
   - key: BOOKING_ID
     value: ""
     disabled: false
-  - key: COMPLETED_BOOKING_ID
-    value: ""
+  - key: ""
+    secret: true
     disabled: false

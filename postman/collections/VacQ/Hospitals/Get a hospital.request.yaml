@@ -1,4 +1,18 @@
 $kind: http-request
-url: "{{URL}}/api/v1/hospitals/6abbf73aaefe6bdb4eae8771"
+url: "{{URL}}/api/v1/hospitals/:hospital_ID"
 method: GET
+pathVariables:
+  hospital_ID: "{{global_hospital_ID}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.execution.setNextRequest(\"Update a hospital\");"
+    language: text/javascript
 order: 2000

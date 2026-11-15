@@ -1,15 +1,33 @@
 $kind: http-request
-url: "{{URL}}/api/v1/hospitals/6a9584e19c67cba316f1bd4f"
+url: "{{URL}}/api/v1/hospitals/:hospital_ID"
 method: PUT
 headers:
   - key: Content-Type
     value: application/json
     description: JSON Type
+pathVariables:
+  hospital_ID: "{{global_hospital_ID}}"
 body:
   type: json
   content: "{\r
 
-    \    \"name\": \"World Medical\"\r
+    \    \"name\": \"{{$randomFullName}}\"\r
 
     }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.execution.setNextRequest(\"Delete a hospital\");"
+    language: text/javascript
 order: 4000
