@@ -1,0 +1,235 @@
+@startuml HotelBookingDomainClasses
+!pragma layout smetana
+title Hotel Booking - Model Class Diagram
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty methods
+
+class User <<Mongoose model>> {
+  +_id : ObjectId
+  +name : String {required}
+  +email : String {required, unique, email format}
+  +tel : String {required, trim}
+  +role : UserRole = user
+  +password : String {required, minlength 6, select false}
+  +resetPasswordToken : String [0..1]
+  +resetPasswordExpire : Date [0..1]
+  +createdAt : Date = now
+  --
+  +getSignedJwtToken() : String
+  +matchPassword(enteredPassword) : Promise<Boolean>
+}
+
+class Hotel <<Mongoose model>> {
+  +_id : ObjectId
+  +name : String {required, unique, trim, maxLength 50}
+  +address : String {required}
+  +district : String {required}
+  +province : String {required}
+  +postalcode : String {required, maxLength 5}
+  +tel : String {required, trim}
+  +region : String {required}
+  +location : GeoPoint [0..1]
+  +pricePerNight : Number = 1500
+  +taxId : String = "0105559876543"
+  +/bookings : Booking [0..*] {virtual}
+}
+
+class GeoPoint <<embedded value>> {
+  +type : String {Point}
+  +coordinates : Number [0..*]
+  +formattedAddress : String [0..1]
+}
+
+class Booking <<Mongoose model>> {
+  +_id : ObjectId
+  +checkInDate : Date {required}
+  +checkOutDate : Date [0..1]
+  +nights : Number {required, integer, 1..3}
+  +status : BookingStatus = Confirmed
+  +transactionRef : String [0..1] {unique, sparse}
+  +reminderEmailSent : Boolean = false
+  +user : ObjectId {required, ref User}
+  +hotel : ObjectId {required, ref Hotel}
+  +createdAt : Date = now
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum BookingStatus {
+  Confirmed
+  Completed
+  Cancelled
+  No-Show
+}
+
+User "1" -- "0..*" Booking : owns
+Hotel "1" -- "0..*" Booking : receives
+Hotel "1" *-- "0..1" GeoPoint : location
+User ..> UserRole : role values
+Booking ..> BookingStatus : status values
+
+note left of User
+  Pre-save hook hashes the password using bcrypt.
+  JWT contains the user ID and uses JWT_EXPIRE.
+  Admin is represented by role = admin.
+end note
+
+note right of Hotel
+  location has a 2dsphere index.
+  GeoJSON coordinates use [longitude, latitude].
+  /bookings is populated through Booking.hotel.
+end note
+
+note bottom of Booking
+  Pre-save hook calculates checkOutDate from checkInDate + nights.
+  Generates transactionRef when absent.
+  Each booking references one user and one hotel.
+  Every booking is limited to 1-3 nights.
+end note
+
+legend bottom
+  [0..1] optional field | {required} required field | /field virtual field
+  Solid line = model association | Filled diamond = embedded value
+  Dotted arrow = dependency | Multiplicity follows schema references
+endlegend
+@enduml
+
+@startuml HotelBookingApiClasses
+!pragma layout smetana
+title Hotel Booking - API Controller Class Diagram
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+package "Controllers" {
+  class AuthController <<module>> {
+    +register(req, res, next)
+    +login(req, res, next)
+    +getMe(req, res, next)
+    +logout(req, res, next)
+    -sendTokenResponse(user, statusCode, res)
+  }
+
+  class HotelController <<module>> {
+    +getHotels(req, res, next)
+    +getHotel(req, res, next)
+    +getHotelsInRadius(req, res, next)
+    +createHotel(req, res, next)
+    +updateHotel(req, res, next)
+    +deleteHotel(req, res, next)
+  }
+
+  class BookingController <<module>> {
+    +getBookings(req, res, next)
+    +getBooking(req, res, next)
+    +addBooking(req, res, next)
+    +updateBooking(req, res, next)
+    +deleteBookings(req, res, next)
+    +downloadInvoice(req, res, next)
+    +triggerCronJob(req, res, next)
+  }
+}
+
+package "Models" {
+  class User <<Mongoose model>>
+  class Hotel <<Mongoose model>>
+  class Booking <<Mongoose model>>
+}
+
+package "Middleware and supporting modules" {
+  class AuthMiddleware <<module>> {
+    +protect(req, res, next)
+    +authorize(...roles)
+  }
+  class BookingJobs <<module>> {
+    +initCronJobs(cronSchedule)
+    +runBookingCronTasks()
+  }
+  class PdfInvoice <<module>> {
+    +generateInvoicePDF(booking, res)
+  }
+  class EmailSender <<module>> {
+    +sendEmail(options)
+  }
+}
+
+AuthController ..> User : register / authenticate
+HotelController ..> Hotel : CRUD / geospatial queries
+HotelController ..> Booking : delete hotel's bookings
+BookingController ..> Booking : CRUD / ownership check
+BookingController ..> Hotel : validate hotel on creation
+BookingController ..> BookingJobs : triggerCronJob
+BookingController ..> PdfInvoice : downloadInvoice
+AuthMiddleware ..> User : load JWT subject
+BookingJobs ..> Booking : complete stays / flag reminders
+BookingJobs ..> EmailSender : send reminders
+
+note top of AuthController
+  POST /api/v1/auth/register -> register [Public]
+  POST /api/v1/auth/login -> login [Public]
+  GET /api/v1/auth/me -> getMe [Bearer]
+  GET /api/v1/auth/logout -> logout [Public]
+end note
+
+note top of HotelController
+  GET /api/v1/hotels -> getHotels [Public]
+  GET /api/v1/hotels/:id -> getHotel [Public]
+  GET /api/v1/hotels/radius/:lat/:lng/:distance -> getHotelsInRadius [Public]
+  POST /api/v1/hotels -> createHotel [Admin]
+  PUT /api/v1/hotels/:id -> updateHotel [Admin]
+  DELETE /api/v1/hotels/:id -> deleteHotel [Admin]
+end note
+
+note top of BookingController
+  GET /api/v1/bookings -> getBookings [Bearer]
+  POST /api/v1/bookings -> addBooking [User/Admin]
+  GET /api/v1/bookings/:id -> getBooking [Owner/Admin]
+  PUT /api/v1/bookings/:id -> updateBooking [Owner/Admin]
+  DELETE /api/v1/bookings/:id -> deleteBookings [Owner/Admin]
+  GET /api/v1/bookings/:id/invoice -> downloadInvoice [Owner/Admin]
+  POST /api/v1/bookings/trigger-cron -> triggerCronJob [Admin]
+  ----
+  GET /api/v1/hotels/:hotelId/bookings -> getBookings [Bearer]
+  POST /api/v1/hotels/:hotelId/bookings -> addBooking [User/Admin]
+  GET /api/v1/hotels/:hotelId/bookings/:id -> getBooking [Owner/Admin]
+  PUT /api/v1/hotels/:hotelId/bookings/:id -> updateBooking [Owner/Admin]
+  DELETE /api/v1/hotels/:hotelId/bookings/:id -> deleteBookings [Owner/Admin]
+  GET /api/v1/hotels/:hotelId/bookings/:id/invoice -> downloadInvoice [Owner/Admin]
+  POST /api/v1/hotels/:hotelId/bookings/trigger-cron -> triggerCronJob [Admin]
+end note
+
+note bottom of AuthMiddleware
+  protect verifies Authorization: Bearer <JWT> and loads req.user.
+  authorize restricts access to permitted roles.
+  Booking controllers also check ownership for individual records.
+end note
+
+note bottom of BookingJobs
+  Completes Confirmed bookings after check-out.
+  Sends reminders for check-in within 24 hours.
+  Default schedule runs every 10 minutes.
+  Manual trigger runs across all hotels.
+end note
+
+note bottom of PdfInvoice
+  Streams a PDF invoice for a Completed booking.
+  Access requires ownership or the admin role.
+end note
+
+legend bottom
+  <<module>> groups exported JavaScript functions as a UML class.
+  Public = public route | Bearer = signed-in user | Admin = admin role
+  Owner/Admin = booking owner or admin | User/Admin = user or admin role
+  Booking list scope is own records for users, all records for admins.
+  Nested list/create uses hotelId. Nested item actions use booking id.
+  API documentation is served at /api-docs.
+endlegend
+@enduml
