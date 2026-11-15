@@ -19,7 +19,8 @@
     "dev": "nodemon server.js",
     "seed": "node seeder.js -i",
     "seed:destroy": "node seeder.js -d",
-    "demo": "newman run HotelBooking.postman_collection.json"
+    "demo": "newman run HotelBooking.postman_collection.json",
+    "mailpit": "mailpit"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
