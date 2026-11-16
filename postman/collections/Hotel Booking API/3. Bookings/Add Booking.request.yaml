@@ -1,0 +1,67 @@
+$kind: http-request
+url: '{{URL}}/api/v1/hotels/{{HOTEL_ID}}/bookings'
+method: POST
+headers:
+  Authorization: Bearer {{TOKEN}}
+  Content-Type: application/json
+description: "Start the Bookings folder here after Login. When HOTEL_ID is
+  empty, the pre-request script fetches the first existing hotel and saves its
+  ID automatically. A supplied HOTEL_ID is preserved. Clear the previous
+  BOOKING_ID, create a new booking and save response.data._id to the collection
+  variable BOOKING_ID automatically. Runner: Add Booking -> Get Single Booking
+  -> Update Booking -> Get All Bookings -> Get Bookings for Hotel -> Delete
+  Booking -> stop. CHECK_IN_DATE defaults to 10 days ahead only when empty.
+  Creation failure stops the run without using an old ID."
+body:
+  type: text
+  content: |-
+    {
+      "checkInDate": "{{CHECK_IN_DATE}}",
+      "nights": 2
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.collectionVariables.set('BOOKING_ID', '');
+      if (!pm.collectionVariables.get('CHECK_IN_DATE')) pm.collectionVariables.set('CHECK_IN_DATE', new Date(Date.now()+10*86400000).toISOString());
+
+      // Choose an existing hotel automatically when HOTEL_ID is empty.
+      if (!pm.variables.get('HOTEL_ID')) {
+        try {
+          const hotels = await pm.sendRequest({
+            url: pm.variables.replaceIn('{{URL}}/api/v1/hotels?limit=1'),
+            method: 'GET'
+          });
+          if (hotels.code !== 200) throw new Error('Cannot load hotels: HTTP ' + hotels.code);
+          const response = hotels.json();
+          const hotelId = response.success === true && Array.isArray(response.data) && response.data[0] && response.data[0]._id;
+          if (typeof hotelId !== 'string' || !/^[a-f0-9]{24}$/i.test(hotelId)) throw new Error('No hotel available. Create a hotel first.');
+          pm.collectionVariables.set('HOTEL_ID', hotelId);
+        } catch (err) {
+          pm.test('Hotel available before creating booking', () => { throw err; });
+          pm.execution.setNextRequest(null);
+          pm.execution.skipRequest();
+        }
+      }
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      pm.test('Response below 3 seconds', () => pm.expect(pm.response.responseTime).to.be.below(3000));
+
+      // Save the new booking ID, then choose the next request (like VacQ).
+      let response;
+      try { response = pm.response.json(); } catch (err) {}
+      const bookingId = response && response.data && response.data._id;
+      const created = pm.response.code === 201 && response && response.success === true && typeof bookingId === 'string' && /^[a-f0-9]{24}$/i.test(bookingId);
+      if (created) pm.collectionVariables.set('BOOKING_ID', bookingId);
+
+      pm.test('Success response', () => pm.expect(response && response.success).to.be.true);
+      pm.test('Save booking ID and validate nights', () => {
+        pm.expect(created).to.be.true;
+        pm.expect(pm.collectionVariables.get('BOOKING_ID')).to.eql(bookingId);
+        pm.expect(response.data.nights).to.eql(JSON.parse(pm.variables.replaceIn(pm.request.body.raw)).nights);
+      });
+      pm.execution.setNextRequest(created ? 'Get Single Booking' : null);
+    language: text/javascript
+order: 1000

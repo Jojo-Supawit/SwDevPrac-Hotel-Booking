@@ -1,0 +1,28 @@
+$kind: http-request
+url: '{{URL}}/api/v1/hotels/{{HOTEL_ID}}/bookings'
+method: GET
+headers:
+  Authorization: Bearer {{TOKEN}}
+description: |-
+  User sees own bookings at this hotel; Admin sees all bookings at this hotel. Runner: next Delete Booking.
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response below 3 seconds', () => pm.expect(pm.response.responseTime).to.be.below(3000));
+
+      pm.test('Success response', () => pm.expect(pm.response.json().success).to.be.true);
+
+
+      // Runner flow (like VacQ)
+
+      let runnerOK = pm.response.code === 200;
+
+      if (runnerOK) {
+        try { runnerOK = pm.response.json().success === true; } catch (err) { runnerOK = false; }
+      }
+
+      pm.execution.setNextRequest(runnerOK ? "Delete Booking" : null);
+    language: text/javascript
+order: 5000

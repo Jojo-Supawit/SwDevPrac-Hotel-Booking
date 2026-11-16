@@ -1,0 +1,33 @@
+$kind: http-request
+url: '{{URL}}/api/v1/bookings/{{BOOKING_ID}}'
+method: GET
+headers:
+  Authorization: Bearer {{TOKEN}}
+description: |-
+  Uses {{BOOKING_ID}} saved by Add Booking; verifies the returned booking ID matches. Owner or Admin token required. Runner: next Update Booking.
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response below 3 seconds', () => pm.expect(pm.response.responseTime).to.be.below(3000));
+
+      pm.test('Success response', () => pm.expect(pm.response.json().success).to.be.true);
+
+
+      pm.test('Returns the created booking', () => pm.expect(pm.response.json().data._id).to.eql(pm.collectionVariables.get('BOOKING_ID')));
+
+
+      // Runner flow (like VacQ)
+
+      let runnerOK = pm.response.code === 200;
+
+      if (runnerOK) {
+        try { runnerOK = pm.response.json().success === true; } catch (err) { runnerOK = false; }
+      }
+
+      if (runnerOK) runnerOK = !!pm.collectionVariables.get('BOOKING_ID') && pm.response.json().data._id === pm.collectionVariables.get('BOOKING_ID');
+
+      pm.execution.setNextRequest(runnerOK ? "Update Booking" : null);
+    language: text/javascript
+order: 2000

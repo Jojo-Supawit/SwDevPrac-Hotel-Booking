@@ -1,0 +1,38 @@
+$kind: http-request
+url: '{{URL}}/api/v1/bookings/{{BOOKING_ID}}'
+method: PUT
+headers:
+  Authorization: Bearer {{TOKEN}}
+  Content-Type: application/json
+description: |-
+  Owner can edit their own booking. Login as Admin to demonstrate editing another user booking. For the PDF demo, keep nights=1 and add status: Completed to this body with an Admin token.
+  Runner: next Get All Bookings.
+body:
+  type: text
+  content: |-
+    {
+      "nights": 1
+    }
+scripts:
+  - type: afterResponse
+    code: >-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+
+      pm.test('Response below 3 seconds', () => pm.expect(pm.response.responseTime).to.be.below(3000));
+
+      pm.test('Success response', () => pm.expect(pm.response.json().success).to.be.true);
+
+      pm.test('Booking updated', () => pm.expect(pm.response.json().data.nights).to.eql(JSON.parse(pm.variables.replaceIn(pm.request.body.raw)).nights));
+
+
+      // Runner flow (like VacQ)
+
+      let runnerOK = pm.response.code === 200;
+
+      if (runnerOK) {
+        try { runnerOK = pm.response.json().success === true; } catch (err) { runnerOK = false; }
+      }
+
+      pm.execution.setNextRequest(runnerOK ? "Get All Bookings" : null);
+    language: text/javascript
+order: 3000
