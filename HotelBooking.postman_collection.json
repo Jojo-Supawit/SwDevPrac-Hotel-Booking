@@ -50,12 +50,17 @@
       "key": "CHECK_IN_DATE",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "CONFIRMED_BOOKING_ID",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "1. Authentication",
-      "item": [
+      "name": "1.1 User Registration - Validation Check (Fail 400)",
+      "event": [
         {
           "name": "Register",
           "event": [
@@ -441,7 +446,14 @@
             },
             "description": "Admin token required.\nRunner: next Delete Hotel."
           },
-          "response": []
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"hotel\": \"{{HOTEL_ID}}\",\n    \"checkInDate\": \"2026-12-15\",\n    \"nights\": 4\n}"
         },
         {
           "name": "Delete Hotel",
@@ -482,11 +494,11 @@
           },
           "response": []
         }
-      ]
+      }
     },
     {
-      "name": "3. Bookings",
-      "item": [
+      "name": "4.2 User Create Booking 1 (User ทั่วไปสร้าง Booking)",
+      "event": [
         {
           "name": "Add Booking",
           "event": [
@@ -704,7 +716,14 @@
             "url": "{{URL}}/api/v1/bookings",
             "description": "User sees own bookings; Admin sees all. Runner: next Get Bookings for Hotel."
           },
-          "response": []
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"nights\": 1\n}"
         },
         {
           "name": "Get Bookings for Hotel",
@@ -891,7 +910,7 @@
           },
           "response": []
         }
-      ]
+      }
     }
   ]
 }

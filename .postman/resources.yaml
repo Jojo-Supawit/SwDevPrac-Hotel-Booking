@@ -1,7 +1,18 @@
-# Use this workspace to collaborate
 workspace:
   id: c79cbac8-7f5e-42c0-8c6a-90770528bd8d
 
 localResources:
   collections:
     - ../postman/collections/Hotel Booking API
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/VacQ: 43157165-22ce4868-3b75-4c21-a3ac-a6b29cdcac20
+    ../postman/collections/Hotel Booking API: 43157165-6ab33f3f-b454-4085-8606-430820213150
+    ../postman/collections/Hotel Booking API - Demo Runner: 839961cb-2a1e-4c54-84bc-8d65c97b2718
+  environments:
+    ../postman/environments/VacQ.environment.yaml: 43157165-927378ee-1e86-4536-9ab5-764617d40b53
+  globals:
+    ../postman/globals/workspace.globals.yaml: d5ac40cc-6e59-4f4e-81c5-8cbaba61e30f

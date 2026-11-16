@@ -1,0 +1,30 @@
+$kind: http-request
+name: 4.2 User Create Booking 1 (User ทั่วไปสร้าง Booking)
+url: "{{URL}}/api/v1/bookings"
+method: POST
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "hotel": "{{HOTEL_ID}}",
+        "checkInDate": "2026-12-20",
+        "nights": 2
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Booking 1 created successfully with 2 nights', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data._id).to.be.a('string');
+          pm.expect(res.data.nights).to.equal(2);
+          pm.collectionVariables.set('USER_BOOKING_1_ID', res.data._id);
+      });
+    language: text/javascript
+order: 6000

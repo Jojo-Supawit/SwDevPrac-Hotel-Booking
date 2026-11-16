@@ -1,0 +1,13 @@
+$kind: collection
+description: "Automated test suite following the exact Project #1 Demo Presentation Rubric (Steps 1-12) + Extra Features (Steps 13-16)"
+variables:
+  URL: http://localhost:5000
+  USER_EMAIL: ""
+  USER_TOKEN: ""
+  ADMIN_TOKEN: ""
+  HOTEL_ID: ""
+  HOTEL_NAME: ""
+  USER_BOOKING_1_ID: ""
+  USER_BOOKING_2_ID: ""
+  COMPLETED_BOOKING_ID: ""
+  CONFIRMED_BOOKING_ID: ""

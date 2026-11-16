@@ -1,0 +1,26 @@
+$kind: http-request
+name: 6. User Edit Own Booking (User ทั่วไป update Booking)
+url: "{{URL}}/api/v1/bookings/{{USER_BOOKING_1_ID}}"
+method: PUT
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "nights": 1
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Booking updated to 1 night', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data.nights).to.equal(1);
+      });
+    language: text/javascript
+order: 9000

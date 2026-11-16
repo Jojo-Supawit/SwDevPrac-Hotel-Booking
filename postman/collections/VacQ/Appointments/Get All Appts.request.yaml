@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{URL}}/api/v1/appointments"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+settings: {}
+order: 1000

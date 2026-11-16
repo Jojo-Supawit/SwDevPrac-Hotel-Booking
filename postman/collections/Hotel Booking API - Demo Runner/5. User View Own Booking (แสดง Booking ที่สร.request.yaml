@@ -1,0 +1,21 @@
+$kind: http-request
+name: 5. User View Own Booking (แสดง Booking ที่สร้างไว้)
+url: "{{URL}}/api/v1/bookings"
+method: GET
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Shows only current user bookings (Confidentiality verified)', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.count).to.be.at.least(1);
+          const ids = res.data.map(b => b._id);
+          pm.expect(ids).to.include(pm.collectionVariables.get('USER_BOOKING_1_ID'));
+      });
+    language: text/javascript
+order: 8000

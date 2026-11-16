@@ -1,0 +1,53 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+    description: JSON Type
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"{{$randomFullName}}\",\r
+
+    \    \"address\": \"Changwattana Pakkret\",\r
+
+    \    \"district\": \"Pakkret\",\r
+
+    \    \"province\": \"Nonthaburi\",\r
+
+    \    \"postalcode\": \"10110\",\r
+
+    \    \"tel\": \"02-8369999\",\r
+
+    \    \"region\": \"กรุงเทพมหานคร (Bangkok)\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      const response = pm.response.json();\r
+
+      const new_hospital_id = response.data.id;\r
+
+      \r
+
+      pm.globals.set(\"global_hospital_ID\", new_hospital_id);\r
+
+      \r
+
+      pm.execution.setNextRequest(\"Get a hospital\");"
+    language: text/javascript
+order: 3000

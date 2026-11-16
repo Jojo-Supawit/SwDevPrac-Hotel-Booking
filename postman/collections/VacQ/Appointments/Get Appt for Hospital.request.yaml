@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals/6aa6d636af28730f96f731a7/appointments"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{TOKEN}}"
+order: 2000

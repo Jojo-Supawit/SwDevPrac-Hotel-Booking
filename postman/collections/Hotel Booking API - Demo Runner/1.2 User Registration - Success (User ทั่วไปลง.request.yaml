@@ -1,0 +1,36 @@
+$kind: http-request
+name: 1.2 User Registration - Success (User ทั่วไปลงทะเบียน)
+url: "{{URL}}/api/v1/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "Demo Regular User",
+        "email": "{{USER_EMAIL}}",
+        "tel": "0812345678",
+        "role": "user",
+        "password": "password123"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      const ts = Date.now();
+      const email = 'user_' + ts + '@example.com';
+      pm.collectionVariables.set('USER_EMAIL', email);
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 or 201', function () {
+          pm.expect([200, 201]).to.include(pm.response.code);
+      });
+      pm.test('User registration succeeds and returns token', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.token).to.be.a('string');
+          pm.collectionVariables.set('USER_TOKEN', res.token);
+      });
+    language: text/javascript
+order: 2000

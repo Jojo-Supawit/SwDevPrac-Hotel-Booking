@@ -1,0 +1,22 @@
+$kind: http-request
+name: 3. User View Product (User ทั่วไปเข้า View Product)
+url: "{{URL}}/api/v1/hotels"
+method: GET
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Hotels (products) list returned successfully', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.count).to.be.above(0);
+          pm.expect(Array.isArray(res.data)).to.be.true;
+          pm.collectionVariables.set('HOTEL_ID', res.data[0]._id);
+          pm.collectionVariables.set('HOTEL_NAME', res.data[0].name);
+      });
+    language: text/javascript
+order: 4000

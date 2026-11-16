@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{URL}}/api/v1/auth/login"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+    description: JSON Type
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"john@gmail.com\",\r
+
+    \    \"password\": \"123456\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: pm.environment.set("TOKEN", pm.response.json().token)
+    language: text/javascript
+order: 2000

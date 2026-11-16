@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hospitals?province[gt]=ง&limit=300"
+method: GET
+queryParams:
+  province[gt]: ง
+  limit: "300"
+order: 6000

@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{URL}}/api/v1/hotels/{{HOTEL_ID}}/bookings"
+method: POST
+headers:
+  Authorization: Bearer {{USER_TOKEN}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "checkInDate": "2026-12-25",
+        "nights": 3
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Booking 2 created via nested route with 3 nights', function () {
+          const res = pm.response.json();
+          pm.expect(res.success).to.be.true;
+          pm.expect(res.data._id).to.be.a('string');
+          pm.expect(res.data.nights).to.equal(3);
+          pm.collectionVariables.set('USER_BOOKING_2_ID', res.data._id);
+      });
+    language: text/javascript
+order: 7000
