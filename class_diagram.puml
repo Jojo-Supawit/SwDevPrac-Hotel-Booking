@@ -1,3 +1,213 @@
+' REST API UML Profile: Application -> Path -> Resource -> Representation.
+' Operations use the real controller export names; return types describe payload data.
+@startuml HotelBookingAuthApi
+!pragma layout smetana
+left to right direction
+title Hotel Booking - Authentication API (UML Profile)
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+package HotelBooking {
+  class HotelBookingService <<Application>> #FFF2CC
+  class Auth <<Resource>> #D9EAD3
+  class Register <<Resource>> #D9EAD3 {
+    +register() : AuthResponse <<POST>>
+  }
+  class Login <<Resource>> #D9EAD3 {
+    +login() : AuthResponse <<POST>>
+  }
+  class Me <<Resource>> #D9EAD3 {
+    +getMe() : User <<GET>>
+  }
+  class Logout <<Resource>> #D9EAD3 {
+    +logout() : EmptyResponse <<GET>>
+  }
+  class AuthResponse <<Representation>> #D9EAD3 {
+    +success : Boolean
+    +_id : ObjectId
+    +name : String
+    +email : String
+    +tel : String
+    +role : String
+    +token : String
+  }
+  class User <<Representation>> #D9EAD3 {
+    +_id : ObjectId
+    +name : String
+    +email : String
+    +tel : String
+    +role : String
+    +createdAt : Date
+  }
+  HotelBookingService ..> Auth : /api/v1/auth\n<<Path>>
+  Auth ..> Register : /register\n<<Path>>
+  Auth ..> Login : /login\n<<Path>>
+  Auth ..> Me : /me\n<<Path>>
+  Auth ..> Logout : /logout\n<<Path>>
+  Register ..> AuthResponse : <<use>>
+  Login ..> AuthResponse : <<use>>
+  Me ..> User : <<use>>
+}
+note bottom of Register
+  Body: name, tel (or telephoneNumber), email, password; role is accepted.
+  200: token issued; 400: registration/validation failure.
+end note
+note bottom of Me
+  Bearer JWT required. Response: {success, data: User}.
+  Password is excluded by the User model.
+end note
+note bottom of Logout
+  Public route; clears token cookie (200).
+  Existing Bearer JWT is not revoked.
+end note
+legend bottom
+  Path labels concatenate from the Application to the selected Resource.
+  HTTP stereotypes identify methods; operations match controllers/auth.js.
+endlegend
+@enduml
+
+@startuml HotelBookingHotelsApi
+!pragma layout smetana
+left to right direction
+title Hotel Booking - Hotels API (UML Profile)
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+package HotelBooking {
+  class HotelBookingService <<Application>> #FFF2CC
+  class Hotels <<Resource>> #D9EAD3 {
+    +getHotels() : Hotel[] <<GET>>
+    +createHotel() : Hotel <<POST>>
+  }
+  class HotelResource <<Resource>> #D9EAD3 {
+    +getHotel() : Hotel <<GET>>
+    +updateHotel() : Hotel <<PUT>>
+    +deleteHotel() : EmptyResponse <<DELETE>>
+  }
+  class HotelsInRadius <<Resource>> #D9EAD3 {
+    +getHotelsInRadius() : Hotel[] <<GET>>
+  }
+  class Hotel <<Representation>> #D9EAD3 {
+    +_id : ObjectId
+    +name : String
+    +address : String
+    +district : String
+    +province : String
+    +postalcode : String
+    +tel : String
+    +region : String
+    +location : GeoJSONPoint
+    +pricePerNight : Number
+    +taxId : String
+  }
+  HotelBookingService ..> Hotels : /api/v1/hotels\n<<Path>>
+  Hotels ..> HotelResource : /{id}\n<<Path>>
+  Hotels ..> HotelsInRadius : /radius/{lat}/{lng}/{distance}\n<<Path>>
+  Hotels ..> Hotel : <<use>>
+  HotelResource ..> Hotel : <<use>>
+  HotelsInRadius ..> Hotel : <<use>>
+}
+note bottom of Hotels
+  GET is public. POST requires Bearer JWT + admin role.
+  List: {success, count, pagination, data: Hotel[]}.
+  Supports select, sort, page, limit and field filters.
+  Optional radius query: ?lat=...&lng=...&distance=... (km).
+  Public responses do not populate user bookings.
+end note
+note bottom of HotelResource
+  GET is public; PUT/DELETE require admin.
+  Single/create/update: {success, data: Hotel}.
+  DELETE removes associated bookings, then the hotel.
+end note
+note bottom of HotelsInRadius
+  Public; distance in kilometers.
+  Uses MongoDB $geoWithin / $centerSphere.
+  Response: {success, count, data: Hotel[]}.
+end note
+@enduml
+
+@startuml HotelBookingBookingsApi
+!pragma layout smetana
+left to right direction
+title Hotel Booking - Bookings API (UML Profile)
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+package HotelBooking {
+  class HotelBookingService <<Application>> #FFF2CC
+  class Bookings <<Resource>> #D9EAD3 {
+    +getBookings() : Booking[] <<GET>>
+    +addBooking() : Booking <<POST>>
+  }
+  class BookingResource <<Resource>> #D9EAD3 {
+    +getBooking() : Booking <<GET>>
+    +updateBooking() : Booking <<PUT>>
+    +deleteBookings() : EmptyResponse <<DELETE>>
+  }
+  class Invoice <<Resource>> #D9EAD3 {
+    +downloadInvoice() : PDF <<GET>>
+  }
+  class CronTrigger <<Resource>> #D9EAD3 {
+    +triggerCronJob() : CronResult <<POST>>
+  }
+  class Booking <<Representation>> #D9EAD3 {
+    +_id : ObjectId
+    +checkInDate : Date
+    +checkOutDate : Date
+    +nights : Integer {1..3}
+    +status : String
+    +transactionRef : String
+    +reminderEmailSent : Boolean
+    +user : ObjectId or User
+    +hotel : ObjectId or Hotel
+    +createdAt : Date
+  }
+  class PDF <<Representation>> #D9EAD3 {
+    +contentType : application/pdf
+    +contentDisposition : attachment
+    +body : Binary
+  }
+  class CronResult <<Representation>> #D9EAD3 {
+    +success : Boolean
+    +transitionedCount : Integer [on success]
+    +remindersSentCount : Integer [on success]
+    +error : String [on failure]
+  }
+  HotelBookingService ..> Bookings : /api/v1/bookings\n<<Path>>
+  Bookings ..> BookingResource : /{id}\n<<Path>>
+  BookingResource ..> Invoice : /invoice\n<<Path>>
+  Bookings ..> CronTrigger : /trigger-cron\n<<Path>>
+  Bookings ..> Booking : <<use>>
+  BookingResource ..> Booking : <<use>>
+  Invoice ..> PDF : <<use>>
+  CronTrigger ..> CronResult : <<use>>
+}
+note bottom of Bookings
+  Bearer JWT required. POST: user/admin; 201 on creation.
+  GET: users see own bookings; admins see all.
+  List response: {success, count, data: Booking[]}.
+  Single/create/update response: {success, data: Booking}.
+  Router is also mounted at /api/v1/hotels/{hotelId}/bookings.
+  Nested list/create scopes by hotelId; item actions use id only.
+end note
+note bottom of BookingResource
+  Owner or admin only (401 for ownership failure).
+  Update recalculates check-out when date/nights change.
+  DELETE physically removes a booking; no refund policy exists.
+end note
+note bottom of Invoice
+  Owner/admin and Completed status required.
+  Includes cost breakdown, tax ID and transaction reference.
+end note
+note bottom of CronTrigger
+  Admin only; runs the same tasks as the scheduler.
+  Scheduler is an internal job, not an HTTP resource.
+end note
+@enduml
+
 @startuml HotelBookingDomainClasses
 !pragma layout smetana
 title Hotel Booking - Model Class Diagram
@@ -97,139 +307,5 @@ legend bottom
   [0..1] optional field | {required} required field | /field virtual field
   Solid line = model association | Filled diamond = embedded value
   Dotted arrow = dependency | Multiplicity follows schema references
-endlegend
-@enduml
-
-@startuml HotelBookingApiClasses
-!pragma layout smetana
-title Hotel Booking - API Controller Class Diagram
-
-skinparam shadowing false
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-hide empty members
-
-package "Controllers" {
-  class AuthController <<module>> {
-    +register(req, res, next)
-    +login(req, res, next)
-    +getMe(req, res, next)
-    +logout(req, res, next)
-    -sendTokenResponse(user, statusCode, res)
-  }
-
-  class HotelController <<module>> {
-    +getHotels(req, res, next)
-    +getHotel(req, res, next)
-    +getHotelsInRadius(req, res, next)
-    +createHotel(req, res, next)
-    +updateHotel(req, res, next)
-    +deleteHotel(req, res, next)
-  }
-
-  class BookingController <<module>> {
-    +getBookings(req, res, next)
-    +getBooking(req, res, next)
-    +addBooking(req, res, next)
-    +updateBooking(req, res, next)
-    +deleteBookings(req, res, next)
-    +downloadInvoice(req, res, next)
-    +triggerCronJob(req, res, next)
-  }
-}
-
-package "Models" {
-  class User <<Mongoose model>>
-  class Hotel <<Mongoose model>>
-  class Booking <<Mongoose model>>
-}
-
-package "Middleware and supporting modules" {
-  class AuthMiddleware <<module>> {
-    +protect(req, res, next)
-    +authorize(...roles)
-  }
-  class BookingJobs <<module>> {
-    +initCronJobs(cronSchedule)
-    +runBookingCronTasks()
-  }
-  class PdfInvoice <<module>> {
-    +generateInvoicePDF(booking, res)
-  }
-  class EmailSender <<module>> {
-    +sendEmail(options)
-  }
-}
-
-AuthController ..> User : register / authenticate
-HotelController ..> Hotel : CRUD / geospatial queries
-HotelController ..> Booking : delete hotel's bookings
-BookingController ..> Booking : CRUD / ownership check
-BookingController ..> Hotel : validate hotel on creation
-BookingController ..> BookingJobs : triggerCronJob
-BookingController ..> PdfInvoice : downloadInvoice
-AuthMiddleware ..> User : load JWT subject
-BookingJobs ..> Booking : complete stays / flag reminders
-BookingJobs ..> EmailSender : send reminders
-
-note top of AuthController
-  POST /api/v1/auth/register -> register [Public]
-  POST /api/v1/auth/login -> login [Public]
-  GET /api/v1/auth/me -> getMe [Bearer]
-  GET /api/v1/auth/logout -> logout [Public]
-end note
-
-note top of HotelController
-  GET /api/v1/hotels -> getHotels [Public]
-  GET /api/v1/hotels/:id -> getHotel [Public]
-  GET /api/v1/hotels/radius/:lat/:lng/:distance -> getHotelsInRadius [Public]
-  POST /api/v1/hotels -> createHotel [Admin]
-  PUT /api/v1/hotels/:id -> updateHotel [Admin]
-  DELETE /api/v1/hotels/:id -> deleteHotel [Admin]
-end note
-
-note top of BookingController
-  GET /api/v1/bookings -> getBookings [Bearer]
-  POST /api/v1/bookings -> addBooking [User/Admin]
-  GET /api/v1/bookings/:id -> getBooking [Owner/Admin]
-  PUT /api/v1/bookings/:id -> updateBooking [Owner/Admin]
-  DELETE /api/v1/bookings/:id -> deleteBookings [Owner/Admin]
-  GET /api/v1/bookings/:id/invoice -> downloadInvoice [Owner/Admin]
-  POST /api/v1/bookings/trigger-cron -> triggerCronJob [Admin]
-  ----
-  GET /api/v1/hotels/:hotelId/bookings -> getBookings [Bearer]
-  POST /api/v1/hotels/:hotelId/bookings -> addBooking [User/Admin]
-  GET /api/v1/hotels/:hotelId/bookings/:id -> getBooking [Owner/Admin]
-  PUT /api/v1/hotels/:hotelId/bookings/:id -> updateBooking [Owner/Admin]
-  DELETE /api/v1/hotels/:hotelId/bookings/:id -> deleteBookings [Owner/Admin]
-  GET /api/v1/hotels/:hotelId/bookings/:id/invoice -> downloadInvoice [Owner/Admin]
-  POST /api/v1/hotels/:hotelId/bookings/trigger-cron -> triggerCronJob [Admin]
-end note
-
-note bottom of AuthMiddleware
-  protect verifies Authorization: Bearer <JWT> and loads req.user.
-  authorize restricts access to permitted roles.
-  Booking controllers also check ownership for individual records.
-end note
-
-note bottom of BookingJobs
-  Completes Confirmed bookings after check-out.
-  Sends reminders for check-in within 24 hours.
-  Default schedule runs every 10 minutes.
-  Manual trigger runs across all hotels.
-end note
-
-note bottom of PdfInvoice
-  Streams a PDF invoice for a Completed booking.
-  Access requires ownership or the admin role.
-end note
-
-legend bottom
-  <<module>> groups exported JavaScript functions as a UML class.
-  Public = public route | Bearer = signed-in user | Admin = admin role
-  Owner/Admin = booking owner or admin | User/Admin = user or admin role
-  Booking list scope is own records for users, all records for admins.
-  Nested list/create uses hotelId. Nested item actions use booking id.
-  API documentation is served at /api-docs.
 endlegend
 @enduml
